@@ -1,4 +1,4 @@
-class View < Image
+class View < Label
 
   def initialize media
     super()
@@ -7,7 +7,7 @@ class View < Image
   end
 
   def redraw
-    self.pixmap = Qt::Pixmap.new @media[@media.current].path
+    self.pixmap = Qt::Pixmap.new(@media.current_file).scaled(1280,800,Qt::KeepAspectRatio,Qt::SmoothTransformation) if @media.current.is_a? Media::Image
   end
 
   def keyPressEvent event

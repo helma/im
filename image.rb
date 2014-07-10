@@ -1,18 +1,15 @@
-class Image < Qt::Label
+require_relative 'media.rb'
 
-  def initialize
-    super
-    set_alignment Qt::AlignCenter
-    border "white"
-    bg "white"
-  end
-
-  def border color
-    setStyleSheet "border: 1px solid #{color}"
-  end
-
-  def bg color
-    setStyleSheet "background-color: #{color}"
+module Media
+  class Image
+    include Media
+    def thumb
+      unless File.exists? @thumb and File.mtime(@thumb) > File.mtime(@path)
+        exif = MiniExiftool.new @path
+        width, height = thumbsize exif.imagewidth, exif.imageheight
+        `gm convert "#{@path}" -thumbnail #{width}x#{height} -strip "#{@thumb}"`
+      end
+      @thumb
+    end
   end
 end
-

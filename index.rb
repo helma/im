@@ -8,8 +8,6 @@ class Index < Qt::Widget
     @cols = cols
 
     @media = media
-    #@pixmaps = {}
-    @labels = []
 
     @layout = Qt::GridLayout.new
     @layout.contents_margins = Qt::Margins.new(0,0,0,0)
@@ -17,36 +15,33 @@ class Index < Qt::Widget
     @layout.vertical_spacing = 0
 
     @rows.times do |row|
-      @labels[row] = []
       @cols.times do |col|
-        label = Image.new
-        @labels[row][col] = label
-        file = @media[row*@cols+col].path
-        label.pixmap = Qt::Pixmap.new(file).scaled(1280/@cols,800/@rows,Qt::KeepAspectRatio,Qt::SmoothTransformation)
-        label.border "black" if row*@cols+col == @media.current
-        @layout.add_widget label, row, col
+        @layout.add_widget Label.new, row, col
       end
     end
     setStyleSheet "background-color: white"
     set_layout @layout
+    redraw
   end
 
   def redraw
     set_layout @layout
-    n = @media.current - @media.current % (@rows*@cols)
+    w = 1280/@cols
+    h = 800/@rows
+    n = @media.current_idx - @media.current_idx % (@rows*@cols)
     n = 0 if n < 0
     @rows.times do |row|
       @cols.times do |col|
-        label = @labels[row][col]
+        label = @layout.itemAtPosition(row,col).widget
         if @media[n]
-          file = @media[n].path
-          label.pixmap = Qt::Pixmap.new(file).scaled(1280/@cols,800/@rows,Qt::KeepAspectRatio,Qt::SmoothTransformation)
+          thumb = @media[n].thumb
+          label.pixmap = Qt::Pixmap.new(thumb).scaled(w,h,Qt::KeepAspectRatio,Qt::SmoothTransformation)
         else
-          label.pixmap = Qt::Pixmap.new label.pixmap.width, label.pixmap.height
+          label.pixmap = Qt::Pixmap.new w,h
           label.pixmap.fill
         end
         label.border "white"
-        label.border "black" if n == @media.current
+        label.border "blue" if n == @media.current_idx
         n += 1
       end
     end

@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+require 'Qt'
+
+app = Qt::Application.new []
+label = Qt::Label.new
+pixmap = Qt::Pixmap.new ARGV.first
+label.pixmap = pixmap.scaled(1280,800,Qt::KeepAspectRatio,Qt::SmoothTransformation)
+label.set_alignment Qt::AlignCenter
+label.setStyleSheet "background-color: white"
+def label.keyPressEvent(event)
+  case event.key
+    when Qt::Key_Q
+      Qt::Application.quit
+  end
+end
+label.show
+app.exec
+
