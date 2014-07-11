@@ -6,9 +6,9 @@ class Model < Array
 
   attr_reader :current_idx
   def initialize args
-    super []
     @dir = args.shift
     @tags = args
+    @delete = []
     objects = []
     extensions = {
       Media::Image => ["jpg","jpeg","png","gif"],
@@ -38,4 +38,10 @@ class Model < Array
   def current_file
     current.path
   end
+
+  def save
+    each { |o| o.save }
+    select{ |o| o.tags.include? "DELETE"}.each{|o| delete o}
+  end
+
 end

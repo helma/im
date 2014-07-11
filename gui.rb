@@ -8,19 +8,27 @@ class Gui < Qt::StackedWidget
   def initialize media
     super nil
     @media = media
+    #add_widget Info.new(@media)
     add_widget View.new(@media)
     add_widget Index.new(@media)
     setCurrentIndex 1
     show
   end
 
+  def save
+  end
+
+  def quit
+    `echo "quit" > /tmp/mplayer` if File.exists? "/tmp/mplayer"
+    #Process.kill "HUP", $mplayer_pid if $mplayer_pid
+    `killall mpv`
+    Qt::Application.quit
+  end
+
   def keyPressEvent event
     case event.text
     when "q"
-      `echo "quit" > /tmp/mplayer` if File.exists? "/tmp/mplayer"
-      #Process.kill "HUP", $mplayer_pid if $mplayer_pid
-      `killall mpv`
-      Qt::Application.quit
+      quit
     when "l"
       @media.move 1
     when "h"
@@ -31,6 +39,8 @@ class Gui < Qt::StackedWidget
       @media.move @media.size-@media.current_idx-1
     when "r"
       @media.current.rotate
+    when "s"
+      @media.save
     else
       case event.key
       when Qt::Key_Left
@@ -42,7 +52,8 @@ class Gui < Qt::StackedWidget
       when Qt::Key_End
         @media.move @media.size-1
       when Qt::Key_Backspace
-        @media.delete_at @media.current_idx
+        @media.current.delete
+        @media.move 1
       when Qt::Key_Escape
         setCurrentIndex 1
       when Qt::Key_Return

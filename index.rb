@@ -41,7 +41,9 @@ class Index < Qt::Widget
           label.pixmap.fill
         end
         label.border "white"
-        label.border "blue" if n == @media.current_idx
+        label.border "red" if @media[n] and @media[n].tags.include? "DELETE"
+        label.border "yellow" if n == @media.current_idx
+        label.bg "yellow" if n == @media.current_idx
         n += 1
       end
     end
