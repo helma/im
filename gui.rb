@@ -1,63 +1,69 @@
 require 'Qt'
 require_relative "label.rb"
-require_relative "view.rb"
 require_relative "index.rb"
+require_relative "show.rb"
+require_relative "info.rb"
 
 class Gui < Qt::StackedWidget
 
-  def initialize media
+  def initialize model
     super nil
-    @media = media
-    #add_widget Info.new(@media)
-    add_widget View.new(@media)
-    add_widget Index.new(@media)
-    setCurrentIndex 1
+    @model = model
+    add_widget Index.new(@model)
+    add_widget Show.new(@model)
+    add_widget Info.new(@model)
+    setCurrentIndex 0
     show
-  end
-
-  def save
   end
 
   def quit
     `echo "quit" > /tmp/mplayer` if File.exists? "/tmp/mplayer"
-    #Process.kill "HUP", $mplayer_pid if $mplayer_pid
     `killall mpv`
     Qt::Application.quit
   end
 
   def keyPressEvent event
+    current_index == 0 ? group_move = false : group_move = true
+    #p group_move
     case event.text
     when "q"
       quit
     when "l"
-      @media.move 1
+      @model.move 1, group_move
     when "h"
-      @media.move -1
-    when "g"
-      @media.move -@media.current_idx
+      @model.move -1, group_move
+    when "0"
+      @model.move -@model.current_idx, group_move
     when "G"
-      @media.move @media.size-@media.current_idx-1
+      @model.move @model.size-@model.current_idx-1, group_move
     when "r"
-      @media.current.rotate
+      @model.current.rotate
     when "s"
-      @media.save
+      @model.save
+    when "i"
+        setCurrentIndex 2
+    when "\\"
+      @model.current.toggle_publish
+    when "v"
+      @model.current.is_a?(Media::Image) ? setCurrentIndex(1) : @model.current.play
     else
       case event.key
       when Qt::Key_Left
-        @media.move -1
+        @model.move -1, group_move
       when Qt::Key_Right
-        @media.move 1
+        @model.move 1, group_move
       when Qt::Key_Home
-        @media.move -@media.current_idx
+        @model.move -@model.current_idx, group_move
       when Qt::Key_End
-        @media.move @media.size-1
+        @model.move @model.size-1, group_move
       when Qt::Key_Backspace
-        @media.current.delete
-        @media.move 1
+        @model.current.delete
+        #@model.move 1, group_move
       when Qt::Key_Escape
-        setCurrentIndex 1
+        setCurrentIndex 0
+        @model.group = nil
       when Qt::Key_Return
-        @media.current.is_a?(Media::Image) ? setCurrentIndex(0) : @media.current.play
+        @model.current.keep
       else
         current_widget.keyPressEvent event
       end
