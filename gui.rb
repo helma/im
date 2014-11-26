@@ -10,64 +10,62 @@ class Gui < Qt::StackedWidget
     super nil
     @model = model
     add_widget Index.new(@model)
-    add_widget Show.new(@model)
     add_widget Info.new(@model)
     setCurrentIndex 0
     show
   end
 
+  def tag_input
+    `echo '#{(@model.tags.collect{|t| @model.current.tags.include?(t) ?  "+#{t}" : t.to_s}.sort).join("\n")}' | dmenu -b `.chomp.sub(/\+/, '')
+  end
+
   def quit
-    `echo "quit" > /tmp/mplayer` if File.exists? "/tmp/mplayer"
-    `killall mpv`
+    `chuck --kill`
     Qt::Application.quit
   end
 
   def keyPressEvent event
-    current_index == 0 ? group_move = false : group_move = true
-    #p group_move
     case event.text
     when "q"
       quit
     when "l"
-      @model.move 1, group_move
+      @model.move 1
     when "h"
-      @model.move -1, group_move
+      @model.move -1
     when "0"
-      @model.move -@model.current_idx, group_move
+      @model.move -@model.current_idx
+    when "$"
+      @model.move @model.size-@model.current_idx-1
     when "G"
-      @model.move @model.size-@model.current_idx-1, group_move
-    when "r"
-      @model.current.rotate
+      @model.tag = @model.current.group
     when "s"
       @model.save
     when "i"
-        setCurrentIndex 2
-    when "\\"
-      @model.current.toggle_publish
-    when "v"
-      @model.current.is_a?(Media::Image) ? setCurrentIndex(1) : @model.current.play
+      setCurrentIndex 1
+    when "t"
+      @model.current.toggle_tag tag_input
     else
       case event.key
       when Qt::Key_Left
-        @model.move -1, group_move
+        @model.move -1
       when Qt::Key_Right
-        @model.move 1, group_move
+        @model.move 1
       when Qt::Key_Home
-        @model.move -@model.current_idx, group_move
+        @model.move -@model.current_idx
       when Qt::Key_End
-        @model.move @model.size-1, group_move
+        @model.move @model.size-1
       when Qt::Key_Backspace
-        @model.current.delete
-        #@model.move 1, group_move
+        @model.current.toggle_tag "DELETE"
       when Qt::Key_Escape
         setCurrentIndex 0
-        @model.group = nil
-      when Qt::Key_Return
-        @model.current.keep
+        @model.tag = nil
+      when Qt::Key_Slash
+        @model.tag = tag_input
       else
         current_widget.keyPressEvent event
       end
     end
+    @model.sort!
     current_widget.redraw
   end
 

@@ -12,7 +12,7 @@ class Info < Qt::ScrollArea
   end
 
   def redraw
-    @label.text = @model.current.info
+    @label.text = "#{@model.tag}\n#{@model.current.info}"
   end
 
 end

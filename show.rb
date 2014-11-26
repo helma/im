@@ -16,6 +16,11 @@ class Show < Label
       @model.move 1
     when "b"
       @model.move -1
+    else
+      case event.key
+      when Qt::Key_Return
+        @model.current.toggle_tag "KEEP"
+      end
     end
   end
 end

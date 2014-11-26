@@ -26,7 +26,7 @@ class Index < Qt::Widget
   end
 
   def redraw
-    @model.group ?  setStyleSheet("background-color: yellow") : setStyleSheet("background-color: lightgrey")
+    #@model.group ?  setStyleSheet("background-color: yellow") : setStyleSheet("background-color: lightgrey")
     w = 1280/@cols
     h = 800/@rows
     n = @model.current_idx - @model.current_idx % (@rows*@cols)
@@ -44,7 +44,7 @@ class Index < Qt::Widget
         label.border "white"
         label.border "red" if @model[n] and @model[n].tags.include? "DELETE"
         label.border "black" if @model[n] and (@model[n].tags & ["KEEP","DELETE"]).empty? and !@model.group
-        label.border "yellow" if @model[n] and @model[n].group and @model[n].group == @model.current.group
+        label.border "yellow" if @model[n] and @model[n].group and @model.current and @model[n].group == @model.current.group
         label.bg "white" if @model[n] and @model[n].tags.include? "PUBLISH"
         label.bg "yellow" if @model[n] and @model[n].group and @model[n].group == @model.current.group
         label.bg "black" if n == @model.current_idx
@@ -65,8 +65,7 @@ class Index < Qt::Widget
       @model.move -@rows*@cols
     when "g"
       if @model.group 
-        @model.current.group = @model.group
-        @model.move 1
+        @model.group = nil
       else
         @model.group = @model.current.group 
         @model.group ||= SecureRandom.uuid
@@ -81,6 +80,13 @@ class Index < Qt::Widget
         @model.move -@rows*@cols
       when Qt::Key_PageDown
         @model.move @rows*@cols
+      when Qt::Key_Return
+        if @model.group
+          @model.current.group = @model.group
+          @model.move 1
+        else
+          @model.current.toggle_tag "KEEP"
+        end
       end
     end
     redraw

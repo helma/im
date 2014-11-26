@@ -1,0 +1,50 @@
+#!/usr/bin/env ruby
+require_relative 'model.rb'
+require_relative 'gui.rb'
+
+class ImageGui < Gui
+  def initialize model
+    super model
+    add_widget Show.new(@model)
+  end
+
+  def move n
+    if @model.current.group and current_index == 2
+      @model.group_move n
+    else
+      @model.move n
+    end
+    current_widget.redraw
+  end
+
+  def keyPressEvent event
+    case event.text
+    when "l"
+      move 1
+    when "h"
+      move -1
+    when "v"
+      setCurrentIndex 2
+      current_widget.redraw
+    when "r"
+      @model.current.rotate
+    when "\\"
+      @model.current.toggle_tag "PUBLISH"
+    else
+      case event.key
+      when Qt::Key_Left
+        move -1
+      when Qt::Key_Right
+        move 1
+      else
+        super event
+      end
+    end
+  end
+end
+
+app = Qt::Application.new([])
+model = Model.from_dir ARGV
+v = ImageGui.new model
+app.exec
+

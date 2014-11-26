@@ -12,17 +12,17 @@ module Media
       @thumb
     end
     def play
-      #Process.kill "HUP", $mpv_pid if $mpv_pid
-      #$mpv_pid = spawn "mpv --gapless-audio=yes #{@rotate} #{@path} --loop-file"
-      #Process.detach $mpv_pid
-      unless $mplayer_pid
-        `mkfifo /tmp/mplayer`
-        $mplayer_pid = spawn "mplayer -idle -slave -input file=/tmp/mplayer '#{@path}' -loop 0"
-        Process.detach $mplayer_pid
-      end
-      #`echo "loop 0" > /tmp/mplayer`
-      `echo "loadfile '#{@path}'" > /tmp/mplayer`
-      #`echo "run" > /tmp/mplayer`
+      #if $chuck_pid 
+        #$chuck_pid = spawn "chuck --loop"
+        #Process.detach $chuck_pid
+        #`chuck + #{File.join(File.dirname(__FILE__),"player.ck")}:#{@path}`
+      #else
+        `chuck = 1 #{File.join(File.dirname(__FILE__),"player.ck")}:#{@path}`
+      #end
+    end
+
+    def info
+      `soxi #{path}`
     end
 
     def quit

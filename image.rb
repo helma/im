@@ -16,11 +16,10 @@ module Media
     end
 
     def fingerprint
+      #@fingerprint_file = File.join(ENV['HOME'],".cache","am",@path).sub(File.extname(@path),'.fingerprint')
       if File.exists? @fingerprint_file and File.mtime(@fingerprint_file) > File.mtime(@path)
-        p "loading fp"
         @fingerprint ||= Marshal.load(File.read @fingerprint_file)
       else
-        p "calculating fp"
         @fingerprint = Phash::Image.new @thumb
         File.open(@fingerprint_file,"w+"){|f| f.print Marshal.dump(@fingerprint)}
       end
@@ -33,7 +32,7 @@ module Media
 
     def info
       info = "Tags                            : #{@tags.join ", "}\n"
-      info += "Group                           : #{@group}\n"
+      #info += "Group                           : #{@group}\n"
       info + `exiftool #{@path}`
     end
   end
