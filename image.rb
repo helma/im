@@ -1,5 +1,5 @@
 require_relative 'media.rb'
-require 'phash/image'
+#require 'phash/image'
 
 module Media
 

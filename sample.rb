@@ -1,4 +1,4 @@
-require 'waveform'
+#require 'waveform'
 require_relative 'media.rb'
 
 module Media
