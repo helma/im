@@ -1,39 +1,44 @@
-require_relative 'media.rb'
-#require 'phash/image'
+require 'base64'
+require 'fileutils'
 
-module Media
+class Image
 
-  class Image
-    include Media
+  attr_accessor :meta
 
-    def thumb
-      unless File.exists? @thumb and File.mtime(@thumb) > File.mtime(@path)
-        exif = MiniExiftool.new @path
-        width, height = thumbsize exif.imagewidth, exif.imageheight
-        `gm convert "#{@path}" -thumbnail #{width}x#{height} -strip "#{@thumb}"`
-      end
-      @thumb
+  def initialize metadata
+    @meta = metadata
+  end
+
+  def file
+    @meta["SourceFile"]
+  end
+
+  def thumb
+    @thumb = File.join(ENV['HOME'],".cache","am",file)
+    FileUtils.mkdir_p File.dirname @thumb
+    unless File.exists? @thumb and File.mtime(@thumb) > File.mtime(file)
+      File.open(@thumb,"w+"){|f| f.print Base64.decode64 @meta["ThumbnailImage"].sub('base64:','')}
     end
+    @thumb
+  end
 
-    def fingerprint
-      #@fingerprint_file = File.join(ENV['HOME'],".cache","am",@path).sub(File.extname(@path),'.fingerprint')
-      if File.exists? @fingerprint_file and File.mtime(@fingerprint_file) > File.mtime(@path)
-        @fingerprint ||= Marshal.load(File.read @fingerprint_file)
-      else
-        @fingerprint = Phash::Image.new @thumb
-        File.open(@fingerprint_file,"w+"){|f| f.print Marshal.dump(@fingerprint)}
-      end
-      @fingerprint
-    end
+  def width
+    @meta["ImageWidth"]
+  end
 
-    def % img
-      fingerprint % img.fingerprint
-    end
+  def height
+    @meta["ImageHeight"]
+  end
 
-    def info
-      info = "Tags                            : #{@tags.join ", "}\n"
-      #info += "Group                           : #{@group}\n"
-      info + `exiftool #{@path}`
-    end
+  def tags
+    @meta["Subject"]
+  end
+
+  def rating
+    @meta["Rating"]
+  end
+
+  def group
+    @meta["Group"]
   end
 end

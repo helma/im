@@ -27,13 +27,6 @@ module Media
     @tags << "NEW" if (@tags & REVIEW_TAGS).empty?
   end
 
-  def thumbsize w,h
-    height = 100
-    width = 16*height/9
-    ratio = [width/w.to_f, height/h.to_f].min
-    [(w*ratio).round, (h*ratio).round]
-  end
-
   def update_group
     groups = @tags.select{|t| t.to_s.uuid?}
     groups.empty? ? @group=nil : @group=groups.first

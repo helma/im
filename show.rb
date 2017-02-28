@@ -7,21 +7,18 @@ class Show < Label
   end
 
   def redraw
-    self.pixmap = Qt::Pixmap.new(@model.current.path).scaled(1280,800,Qt::KeepAspectRatio,Qt::SmoothTransformation) if @model.current.is_a? Media::Image
+    setStyleSheet("background-color: black")
+    self.pixmap = Qt::Pixmap.new(@model.current.file).scaled(1920,1080,Qt::KeepAspectRatio,Qt::SmoothTransformation) 
   end
 
   def keyPressEvent event
-    case event.text
-    when " "
-      @model.move 1
-    when "b"
+    k = event.key
+    if k == Qt::Key_Up or k == Qt::Key_K or k == Qt::Key_PageUp or k == Qt::Key_B
       @model.move -1
-    else
-      case event.key
-      when Qt::Key_Return
-        @model.current.toggle_tag "KEEP"
-      end
+    elsif k == Qt::Key_Down or k == Qt::Key_J or k == Qt::Key_PageDown or k == Qt::Key_Space
+      @model.move 1
     end
   end
+
 end
 

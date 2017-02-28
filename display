@@ -4,7 +4,7 @@ require 'Qt'
 app = Qt::Application.new []
 label = Qt::Label.new
 pixmap = Qt::Pixmap.new ARGV.first
-label.pixmap = pixmap.scaled(1280,800,Qt::KeepAspectRatio,Qt::SmoothTransformation)
+label.pixmap = pixmap.scaled(1920,1080,Qt::KeepAspectRatio,Qt::SmoothTransformation)
 label.set_alignment Qt::AlignCenter
 label.setStyleSheet "background-color: white"
 def label.keyPressEvent(event)

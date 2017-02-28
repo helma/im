@@ -19,7 +19,7 @@ module Media
     end
     def rotate
       @rotate = "-vf rotate=1"
-      `gm mogrify -rotate 90 #{@thumb}`
+      `mogrify -rotate 90 #{@thumb}`
     end
   end
 end

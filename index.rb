@@ -20,76 +20,52 @@ class Index < Qt::Widget
         @layout.add_widget Label.new, row, col
       end
     end
-    setStyleSheet("background-color: white")
+    setStyleSheet("background-color: black")
     set_layout @layout
     redraw
   end
 
   def redraw
     #@model.group ?  setStyleSheet("background-color: yellow") : setStyleSheet("background-color: lightgrey")
-    w = 1280/@cols
-    h = 800/@rows
+    w = 1920/@cols
+    h = 1080/@rows
     n = @model.current_idx - @model.current_idx % (@rows*@cols)
     n = 0 if n < 0
+    setStyleSheet("background-color: black")
     @rows.times do |row|
       @cols.times do |col|
         label = @layout.itemAtPosition(row,col).widget
         if @model[n]
           thumb = @model[n].thumb
-          label.pixmap = Qt::Pixmap.new(thumb).scaled(w,h,Qt::KeepAspectRatio,Qt::SmoothTransformation)
+          label.pixmap = Qt::Pixmap.new(@model[n].thumb).scaled(w,h,Qt::KeepAspectRatio,Qt::SmoothTransformation)
         else
           label.pixmap = Qt::Pixmap.new w,h
           label.pixmap.fill
         end
-        label.border "white"
-        label.border "red" if @model[n] and @model[n].tags.include? "DELETE"
-        label.border "black" if @model[n] and (@model[n].tags & ["KEEP","DELETE"]).empty? and !@model.group
+        label.border "black"
+        #label.border "white"
+        #label.border "red" if @model[n] and @model[n].tags.include? "DELETE"
+        #label.border "black" if @model[n] and (@model[n].tags & ["KEEP","DELETE"]).empty? and !@model.group
         label.border "yellow" if @model[n] and @model[n].group and @model.current and @model[n].group == @model.current.group
-        label.bg "white" if @model[n] and @model[n].tags.include? "PUBLISH"
+        #label.bg "white" if @model[n] and @model[n].tags.include? "PUBLISH"
         label.bg "yellow" if @model[n] and @model[n].group and @model[n].group == @model.current.group
-        label.bg "black" if n == @model.current_idx
+        label.border "white" if n == @model.current_idx
         n += 1
       end
     end
   end
 
   def keyPressEvent event
-    case event.text
-    when "k"
+    k = event.key
+    if k == Qt::Key_Up or k == Qt::Key_K
       @model.move -@cols
-    when "j"
+    elsif k == Qt::Key_Down or k == Qt::Key_J
       @model.move @cols
-    when " "
+    elsif k == Qt::Key_PageDown or k == Qt::Key_Space
       @model.move @rows*@cols
-    when "b"
+    elsif k == Qt::Key_PageUp or k == Qt::Key_B
       @model.move -@rows*@cols
-    when "g"
-      if @model.group 
-        @model.group = nil
-      else
-        @model.group = @model.current.group 
-        @model.group ||= SecureRandom.uuid
-      end
-    else
-      case event.key
-      when Qt::Key_Down
-        @model.move @cols
-      when Qt::Key_Up
-        @model.move -@cols
-      when Qt::Key_PageUp
-        @model.move -@rows*@cols
-      when Qt::Key_PageDown
-        @model.move @rows*@cols
-      when Qt::Key_Return
-        if @model.group
-          @model.current.group = @model.group
-          @model.move 1
-        else
-          @model.current.toggle_tag "KEEP"
-        end
-      end
     end
-    redraw
   end
 
 end

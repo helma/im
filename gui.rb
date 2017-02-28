@@ -2,7 +2,6 @@ require 'Qt'
 require_relative "label.rb"
 require_relative "index.rb"
 require_relative "show.rb"
-require_relative "info.rb"
 
 class Gui < Qt::StackedWidget
 
@@ -10,7 +9,7 @@ class Gui < Qt::StackedWidget
     super nil
     @model = model
     add_widget Index.new(@model)
-    add_widget Info.new(@model)
+    add_widget Show.new(@model)
     setCurrentIndex 0
     show
   end
@@ -25,47 +24,29 @@ class Gui < Qt::StackedWidget
   end
 
   def keyPressEvent event
-    case event.text
-    when "q"
-      quit
-    when "l"
-      @model.move 1
-    when "h"
+    k = event.key
+    t = event.text
+    if k == Qt::Key_Left or k == Qt::Key_H
       @model.move -1
-    when "0"
+    elsif k == Qt::Key_Right or k == Qt::Key_L
+      @model.move 1
+    elsif k == Qt::Key_Home or t == "g"
       @model.move -@model.current_idx
-    when "$"
+    elsif k == Qt::Key_End or t == "G"
       @model.move @model.size-@model.current_idx-1
-    when "G"
-      @model.tag = @model.current.group
-    when "s"
-      @model.save
-    when "i"
+    elsif k == Qt::Key_Insert
+        p "insert"
+    elsif k == Qt::Key_Delete
+        p "delete"
+    elsif k == Qt::Key_Return
       setCurrentIndex 1
-    when "t"
-      @model.current.toggle_tag tag_input
+    elsif k == Qt::Key_Escape
+      setCurrentIndex 0
+    elsif k == Qt::Key_Q
+      Qt::Application.quit
     else
-      case event.key
-      when Qt::Key_Left
-        @model.move -1
-      when Qt::Key_Right
-        @model.move 1
-      when Qt::Key_Home
-        @model.move -@model.current_idx
-      when Qt::Key_End
-        @model.move @model.size-1
-      when Qt::Key_Backspace
-        @model.current.toggle_tag "DELETE"
-      when Qt::Key_Escape
-        setCurrentIndex 0
-        @model.tag = nil
-      when Qt::Key_Slash
-        @model.tag = tag_input
-      else
-        current_widget.keyPressEvent event
-      end
+      current_widget.keyPressEvent event
     end
-    @model.sort!
     current_widget.redraw
   end
 
