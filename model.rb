@@ -3,7 +3,7 @@ require_relative 'image.rb'
 
 class Model
 
-  attr_reader :current_idx, :group, :tag# :selection, :tags
+  attr_reader :current_idx, :images
 
   def initialize files
     @images = JSON.parse(`exiftool -j -b #{files.collect{|f| "'#{f}'"}.join " "}`).collect{|meta| Image.new meta}

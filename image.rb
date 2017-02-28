@@ -22,6 +22,20 @@ class Image
     @thumb
   end
 
+  def delete
+    #@meta["Rating"] == 1
+    `exiftool -Rating=1 #{file}`
+  end
+
+  def keep
+    #@meta["Rating"] == 3
+    `exiftool -Rating=3 #{file}`
+  end
+
+  def publish
+    @meta["Rating"] == 5
+  end
+
   def width
     @meta["ImageWidth"]
   end
@@ -35,7 +49,7 @@ class Image
   end
 
   def rating
-    @meta["Rating"]
+    @meta["Rating"].to_i
   end
 
   def group

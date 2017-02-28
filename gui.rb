@@ -10,17 +10,9 @@ class Gui < Qt::StackedWidget
     @model = model
     add_widget Index.new(@model)
     add_widget Show.new(@model)
+    setStyleSheet("background-color: black")
     setCurrentIndex 0
     show
-  end
-
-  def tag_input
-    `echo '#{(@model.tags.collect{|t| @model.current.tags.include?(t) ?  "+#{t}" : t.to_s}.sort).join("\n")}' | dmenu -b `.chomp.sub(/\+/, '')
-  end
-
-  def quit
-    `chuck --kill`
-    Qt::Application.quit
   end
 
   def keyPressEvent event
@@ -34,10 +26,6 @@ class Gui < Qt::StackedWidget
       @model.move -@model.current_idx
     elsif k == Qt::Key_End or t == "G"
       @model.move @model.size-@model.current_idx-1
-    elsif k == Qt::Key_Insert
-        p "insert"
-    elsif k == Qt::Key_Delete
-        p "delete"
     elsif k == Qt::Key_Return
       setCurrentIndex 1
     elsif k == Qt::Key_Escape
