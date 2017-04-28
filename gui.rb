@@ -1,5 +1,4 @@
 require 'Qt'
-require_relative "label.rb"
 require_relative "index.rb"
 require_relative "show.rb"
 
@@ -26,6 +25,12 @@ class Gui < Qt::StackedWidget
       @model.move -@model.current_idx
     elsif k == Qt::Key_End or t == "G"
       @model.move @model.size-@model.current_idx-1
+    elsif k == Qt::Key_Insert
+      @model[@model.current_idx].keep
+      @model.images.delete_at @model.current_idx
+    elsif k == Qt::Key_Delete
+      @model[@model.current_idx].delete
+      @model.images.delete_at @model.current_idx
     elsif k == Qt::Key_Return
       setCurrentIndex 1
     elsif k == Qt::Key_Escape

@@ -23,17 +23,18 @@ class Image
   end
 
   def delete
-    #@meta["Rating"] == 1
-    `exiftool -Rating=1 #{file}`
+    @meta["Rating"] == 1
+    `exiftool -P -overwrite_original -Rating=1 #{file}`
   end
 
   def keep
-    #@meta["Rating"] == 3
-    `exiftool -Rating=3 #{file}`
+    @meta["Rating"] == 3
+    `exiftool -P -overwrite_original -Rating=3 #{file}`
   end
 
   def publish
     @meta["Rating"] == 5
+    `exiftool -P -overwrite_original -Rating=5 #{file}`
   end
 
   def width

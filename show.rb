@@ -1,14 +1,17 @@
-class Show < Label
+class Show < Qt::Label
 
   def initialize model
     super()
+    set_alignment Qt::AlignCenter
     @model = model
+    setStyleSheet("background-color: black")
     redraw
   end
 
   def redraw
-    setStyleSheet("background-color: black")
-    self.pixmap = Qt::Pixmap.new(@model.current.file).scaled(1920,1080,Qt::KeepAspectRatio,Qt::SmoothTransformation) 
+    p (@model.current.file)
+    i = Qt::Pixmap.new(@model.current.file)
+    self.pixmap = i.scaled(1920,1080,Qt::KeepAspectRatio,Qt::SmoothTransformation) 
   end
 
   def keyPressEvent event

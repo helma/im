@@ -17,7 +17,10 @@ class Index < Qt::Widget
 
     @rows.times do |row|
       @cols.times do |col|
-        @layout.add_widget Label.new, row, col
+        label = Qt::Label.new
+        label.set_alignment Qt::AlignCenter
+        label.setStyleSheet "background-color: black"
+        @layout.add_widget label, row, col
       end
     end
     set_layout @layout
@@ -36,25 +39,21 @@ class Index < Qt::Widget
         if @model[n]
           thumb = @model[n].thumb
           label.pixmap = Qt::Pixmap.new(@model[n].thumb).scaled(w,h,Qt::KeepAspectRatio,Qt::SmoothTransformation)
-        else # TODO fill black
+        else 
           label.pixmap = Qt::Pixmap.new w,h
-          label.pixmap.fill
+          label.pixmap.fill Qt::Color.new(Qt::black)
         end
-        label.border "black"
+        label.setStyleSheet "border: 1px solid black"
         if @model[n] and @model[n].rating != 0
           if @model[n].rating < 3
-            label.border "red"
+            label.setStyleSheet "border: 1px solid red"
           elsif @model[n].rating < 5
-            label.border "yellow"
+            label.setStyleSheet "border: 1px solid yellow"
           elsif @model[n].rating == 5
-            label.border "green"
+            label.setStyleSheet "border: 1px solid green"
           end
         end
-        #label.border "black" if @model[n] and (@model[n].tags & ["KEEP","DELETE"]).empty? and !@model.group
-        #label.border "yellow" if @model[n] and @model[n].group and @model.current and @model[n].group == @model.current.group
-        #label.bg "white" if @model[n] and @model[n].tags.include? "PUBLISH"
-        #label.bg "yellow" if @model[n] and @model[n].group and @model[n].group == @model.current.group
-        label.border "white" if n == @model.current_idx
+        label.setStyleSheet "border: 1px solid white" if n == @model.current_idx
         n += 1
       end
     end
