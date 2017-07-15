@@ -19,8 +19,8 @@ meta.each do |file,metadata|
   end
 end
 
-motifs.each do |motif,files|
-#motifs.reverse_each do |motif,files|
+#motifs.each do |motif,files|
+motifs.reverse_each do |motif,files|
   selected = files.select{|f| meta[f]["Xmp.xmpMM.MotifSelected"]}
   ratings = files.collect{|f| meta[f]["Xmp.xmp.Rating"].to_i}
   parent_ids = files.collect{|f| meta[f]["Xmp.xmpMM.DerivedFrom"]}
@@ -61,7 +61,18 @@ motifs.each do |motif,files|
       #files.select!{|f| i = files.index(i); ratings[i] > 2}
       puts "Manual selection from #{rfiles}."
       #puts rfiles.collect{|f| meta[f]}.to_yaml
-      `sxiv -f #{rfiles.join " "}` if rfiles.size > 1
+      #`sxiv -f #{rfiles.join " "}` if rfiles.size > 1
+      while (rfiles.size > 1) do
+        rfiles.shuffle!
+        cand = []
+        2.times{ cand << rfiles.shift }
+        `sxiv -f #{cand.join " "}` 
+        rfiles << File.read("/tmp/selected").chomp
+      end
+      file = rfiles.first
+      rating = `exiv2 -q -P v -g Xmp.xmp.Rating #{file}`.chomp.to_i
+      `exiv2 -M"set Xmp.xmp.Rating 3" #{file}` if rating == 0
+      `exiv2 -M"set Xmp.xmpMM.MotifSelected true" #{file}`
     end
   end
 end
