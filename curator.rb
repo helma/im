@@ -17,6 +17,9 @@ optparse = OptionParser.new do|opts|
   opts.on( '-n', '--number COUNT', 'Number of similar images' ) do |n|
     options[:nr] = n.to_i
   end
+  opts.on( '-q', '--query IMAGE', 'Query image' ) do |i|
+    options[:query] = i
+  end
 end
 optparse.parse!
 
@@ -69,7 +72,11 @@ FILES.each_with_index do |f,i|
   end
 end
 
-q = SecureRandom.random_number(FILES.size)
+if options[:query]
+  q = FILES.index(options[:query])
+else
+  q = SecureRandom.random_number(FILES.size)
+end
 header = []
 dist = []
 matrix[q].sort[0..options[:nr]-1].each_with_index do |d,k|
