@@ -51,13 +51,13 @@ end
     s = `convert #{file} -resize 16x16! -depth 16 -colorspace RGB -compress none PGM:-`.split("\n")[3..-1]
     fingerprint = s.collect{|l| l.split(" ").collect{|v| v.to_f}}.flatten
     `exiv2 -M"set Xmp.xmpMM.Fingerprint #{fingerprint.to_json}" #{file}`
-    fingerprints[file] = JSON.parse fingerprint
+    fingerprints[file] = fingerprint
 end
 
 if options[:query] and !fingerprints.keys.include?(options[:query])
-  s = `convert #{file} -resize 16x16! -depth 16 -colorspace RGB -compress none PGM:-`.split("\n")[3..-1]
+  s = `convert #{options[:query]} -resize 16x16! -depth 16 -colorspace RGB -compress none PGM:-`.split("\n")[3..-1]
   fingerprint = s.collect{|l| l.split(" ").collect{|v| v.to_f}}.flatten
-  fingerprints[options[:query]] = JSON.parse fingerprint
+  fingerprints[options[:query]] = fingerprint
 end
 
 options[:query] ? query_file = options[:query] : query_file = fingerprints.keys[SecureRandom.random_number(fingerprints.keys.size)]
