@@ -1,9 +1,10 @@
 #!/usr/bin/env ruby
 require 'yaml'
+require_relative 'input.rb'
 meta = {}
 motifs = {}
 
-`exiv2 -g Xmp.xmpMM -g Xmp.xmp.Rating /home/ch/images/art/*`.each_line do |line|
+`exiv2 -g Xmp.xmpMM -g Xmp.xmp.Rating #{FILES.join " "}`.each_line do |line|
   file, id, type, size, value = line.chomp.split /\s+/
   meta[file] ||= {}
   meta[file][id] = value

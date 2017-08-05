@@ -1,10 +1,26 @@
 #!/usr/bin/env ruby
 require 'fileutils'
 require 'securerandom'
+require "optparse"
 require 'json'
 
 METADIR = "/home/ch/images/metadata"
 FileUtils.mkdir_p METADIR
+
+options = {}
+options[:nr] = 10
+optparse = OptionParser.new do|opts|
+  opts.on( '-h', '--help', 'Display this screen' ) do
+    puts opts
+    exit
+  end
+  opts.on( '-n', '--number COUNT', 'Number of similar images' ) do |n|
+    options[:nr] = n.to_i
+  end
+end
+optparse.parse!
+
+require_relative 'input.rb'
 
 def get_rgb file
   meta_file = File.join METADIR, File.basename(file)+".rgb.json"
@@ -39,12 +55,12 @@ end
 
 files = ARGV
 matrix = []
-files.each_with_index do |f,i|
+FILES.each_with_index do |f,i|
   rgb1 = get_rgb f
   matrix[i] ||= []
   matrix[i][i] = 0.0
-  (i+1..files.size-1).each do |j|
-    rgb2 = get_rgb files[j]
+  (i+1..FILES.size-1).each do |j|
+    rgb2 = get_rgb FILES[j]
     #dist = cosine([rgb1,rgb2])
     dist = euclid([rgb1,rgb2])
     matrix[i][j] = dist 
@@ -53,29 +69,27 @@ files.each_with_index do |f,i|
   end
 end
 
-q = SecureRandom.random_number(files.size)
+q = SecureRandom.random_number(FILES.size)
 header = []
 dist = []
-matrix[q].sort[0..9].each_with_index do |d,k|
+matrix[q].sort[0..options[:nr]-1].each_with_index do |d,k|
   i = matrix[q].index(d)
-  header[k] = files[i]
+  header[k] = FILES[i]
 end
 
 header.each_with_index do |f,i|
-  mi = files.index(f)
+  mi = FILES.index(f)
   dist[i] ||= []
-  (i..9).each do |j|
+  (i..options[:nr]-1).each do |j|
     dist[j] ||= []
-    mj = files.index(header[j])
+    mj = FILES.index(header[j])
     dist[i][j] = matrix[mi][mj]
     dist[j][i] = matrix[mi][mj]
   end
 end
 
-#puts header.join("\n")
 File.open("/tmp/dist.csv","w+") do |f|
   dist.each_with_index{|dist,i| f.puts dist.join(",")}
 end
 
-#puts `Rscript tsp.R`.split(" ").collect{|f| f.sub(/^X/,"/home/ch/images/art/")}.join("\n")
 puts `Rscript tsp.R`.split(" ").collect{|v| header[v.sub('V','').to_i-1]}.join("\n")
