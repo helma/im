@@ -4,9 +4,6 @@ require 'securerandom'
 require "optparse"
 require 'json'
 
-METADIR = "/home/ch/images/metadata"
-FileUtils.mkdir_p METADIR
-
 options = {}
 options[:nr] = 10
 optparse = OptionParser.new do|opts|
@@ -24,18 +21,6 @@ end
 optparse.parse!
 
 require_relative 'input.rb'
-
-def get_rgb file
-  meta_file = File.join METADIR, File.basename(file)+".rgb.json"
-  if File.exists? meta_file and FileUtils.uptodate?(meta_file,[file])
-    JSON.parse File.read(meta_file)
-  else
-    s = `convert #{file} -resize 16x16! -depth 16 -colorspace RGB -compress none PGM:-`.split("\n")[3..-1]
-    rgb = s.collect{|l| l.split(" ").collect{|v| v.to_f}}.flatten
-    File.open(meta_file,"w+"){|f| f.puts rgb.to_json}
-    rgb
-  end
-end
 
 def dot_product(a, b)
   products = a.zip(b).map{|a, b| a * b}
@@ -56,42 +41,38 @@ def cosine scaled_properties
   dot_product(scaled_properties[0], scaled_properties[1]) / (magnitude(scaled_properties[0]) * magnitude(scaled_properties[1]))
 end
 
-files = ARGV
-matrix = []
-FILES.each_with_index do |f,i|
-  rgb1 = get_rgb f
-  matrix[i] ||= []
-  matrix[i][i] = 0.0
-  (i+1..FILES.size-1).each do |j|
-    rgb2 = get_rgb FILES[j]
-    #dist = cosine([rgb1,rgb2])
-    dist = euclid([rgb1,rgb2])
-    matrix[i][j] = dist 
-    matrix[j] ||= []
-    matrix[j][i] = dist 
-  end
+fingerprints = {}
+`exiv2 -q -P v -g "Xmp.xmpMM.Fingerprint" #{FILES.join " "}`.split("\n").each do |l|
+  file,value_str = l.split(/\s+/)
+  fingerprints[file] = JSON.parse value_str
 end
 
-if options[:query]
-  q = FILES.index(options[:query])
-else
-  q = SecureRandom.random_number(FILES.size)
+(FILES-fingerprints.keys).each do |file|
+    s = `convert #{file} -resize 16x16! -depth 16 -colorspace RGB -compress none PGM:-`.split("\n")[3..-1]
+    fingerprint = s.collect{|l| l.split(" ").collect{|v| v.to_f}}.flatten
+    `exiv2 -M"set Xmp.xmpMM.Fingerprint #{fingerprint.to_json}" #{file}`
+    fingerprints[file] = JSON.parse fingerprint
 end
-header = []
+
+if options[:query] and !fingerprints.keys.include?(options[:query])
+  s = `convert #{file} -resize 16x16! -depth 16 -colorspace RGB -compress none PGM:-`.split("\n")[3..-1]
+  fingerprint = s.collect{|l| l.split(" ").collect{|v| v.to_f}}.flatten
+  fingerprints[options[:query]] = JSON.parse fingerprint
+end
+
+options[:query] ? query_file = options[:query] : query_file = fingerprints.keys[SecureRandom.random_number(fingerprints.keys.size)]
+
+query_fingerprint = fingerprints[query_file]
+selection = fingerprints.collect{|f,fp| [f,euclid([query_fingerprint,fp])]}.sort{|a,b| a[1] <=> b[1]}.collect{|i| i[0]}[0..options[:nr]-1]
+
 dist = []
-matrix[q].sort[0..options[:nr]-1].each_with_index do |d,k|
-  i = matrix[q].index(d)
-  header[k] = FILES[i]
-end
-
-header.each_with_index do |f,i|
-  mi = FILES.index(f)
+selection.each_with_index do |f,i|
   dist[i] ||= []
   (i..options[:nr]-1).each do |j|
     dist[j] ||= []
-    mj = FILES.index(header[j])
-    dist[i][j] = matrix[mi][mj]
-    dist[j][i] = matrix[mi][mj]
+    d = euclid([fingerprints[f],fingerprints[selection[j]]])
+    dist[i][j] = d
+    dist[j][i] = d
   end
 end
 
@@ -99,4 +80,4 @@ File.open("/tmp/dist.csv","w+") do |f|
   dist.each_with_index{|dist,i| f.puts dist.join(",")}
 end
 
-puts `Rscript tsp.R`.split(" ").collect{|v| header[v.sub('V','').to_i-1]}.join("\n")
+puts `Rscript tsp.R`.split(" ").collect{|v| selection[v.sub('V','').to_i-1]}.join("\n")
