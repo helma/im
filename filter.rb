@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "optparse"
+
 options = {}
 optparse = OptionParser.new do|opts|
   opts.on( '-h', '--help', 'Display this screen' ) do
@@ -24,11 +25,6 @@ optparse.parse!
 
 require_relative "input.rb"
 files = FILES
-#if STDIN.tty?
-  #ARGV.empty? ? files = `ls /home/ch/images/art/*`.split("\n") : files = ARGV
-#else
-  #files = STDIN.readlines.collect{|l| l.chomp}
-#end
 
 if options[:ratings]
   files = `exiv2 -K Xmp.xmp.Rating #{files.join " "} | grep '#{options[:ratings]}$' | sed 's/  Xmp\.xmp\.Rating.*$//' | sed 's/^.*=//'`.split("\n")
