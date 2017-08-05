@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 require 'json'
+require_relative "input.rb"
 meta = {}
-`exiv2 -p a ~/images/art/* 2>/dev/null`.each_line do |line|
+`exiv2 -p a #{FILES.join " "} 2>/dev/null`.each_line do |line|
   items = line.split(/\s+/)
   file = items.shift
   meta[file] ||= {}

@@ -1,10 +1,6 @@
 #!/usr/bin/env ruby
 if STDIN.tty?
-  if ARGV.empty? 
-    FILES = `ls /home/ch/images/art/*`.gsub("\n"," ")
-  else
-    FILES = ARGV.join(" ")
-  end
+  ARGV.empty? ? FILES = `ls /home/ch/images/art/*`.split("\n") : FILES = ARGV
 else
-  FILES = STDIN.readlines.join(" ").gsub("\n","")
+  FILES = STDIN.readlines.collect{|l| l.chomp}
 end
