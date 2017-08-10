@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+require_relative "input.rb"
+
+meta = `exiv2 -K Xmp.xmpMM.MotifSelected -K Xmp.xmpMM.MotifID -K Xmp.xmp.Rating #{FILES.join " "} 2>/dev/null`.split("\n").collect{|l| l.split(/\s+/)}
+groups = meta.select{|m| m[1] == "Xmp.xmpMM.MotifID"}.collect{|m| m[4]}.uniq
+favs = meta.select{|m| m[1] == "Xmp.xmpMM.MotifSelected"}.collect{|m| m[0]}.uniq
+favgroups = favs.collect{|f| meta.select{|m| m[0] == f and m[1] == "Xmp.xmpMM.MotifID"}.collect{|m| m[4]}}.flatten.uniq
+(groups - favgroups).each do |g|
+  files = meta.select{|m| m[1] == "Xmp.xmpMM.MotifID" and m[4] == g}.collect{|m| m[0]}.uniq
+  ratings = files.collect{|f| meta.select{|m| m[0] == f and m[1] == "Xmp.xmp.Rating"}.collect{|m| m[4].to_i}}.flatten.uniq
+  unless ratings == [1]
+    puts "Manual selection from #{files} #{ratings}."
+    while (files.size > 1) do
+      files.shuffle!
+      cand = []
+      2.times{ cand << files.shift }
+      `sxiv -f #{cand.join " "}` 
+      files << File.read("/tmp/selected").chomp
+    end
+    file = files.first
+    rating = `exiv2 -q -P v -K Xmp.xmp.Rating #{file}`.chomp.to_i
+    `exiv2 -M"set Xmp.xmp.Rating 3" #{file}` if rating == 0
+    `exiv2 -M"set Xmp.xmpMM.MotifSelected true" #{file}`
+  end
+end

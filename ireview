@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+
+=begin
+print "Select files to be deleted"
+gets
+`sxiv -ot $(ifilt -r 0) | itag -r 1`
+
+print "Group files"
+gets
+`sxiv -t $(ifilt -r 0|ungrouped.rb)`
+
+print "Select group favorites"
+gets
+`igfav`
+=end
+
+`itag -l`.split("\n").shuffle.each do |tag|
+  print "Select images for tag '#{tag}'"
+  gets
+  `ls -r /home/ch/images/art/* | selected.rb | ifilt -e #{tag} -r 0,3,4,5 | sxiv -iot | itag -a #{tag}`
+end

@@ -13,20 +13,43 @@ optparse = OptionParser.new do|opts|
   opts.on( '-d', '--delete-tags TAGS', 'Delete tags (comma separated)' ) do |t|
     options[:delete_tags] = t.split ","
   end
+  opts.on( '-r', '--rate RATING', 'Rate image (1,3,5)' ) do |t|
+    options[:rating] = t.to_i
+  end
+  opts.on( '-l', '--list', 'List tags' ) do |t|
+    options[:list] = true
+  end
 end
 optparse.parse!
 
 require_relative "input.rb"
 
+if options[:list]
+  tags = []
+  `exiv2 -q -P v -K Xmp.dc.subject #{FILES.join " "} 2>/dev/null`.split("\n").each do |l|
+    l.sub!(/.*\s+/,'')
+    tags += l.split(/,/) if l
+  end
+  puts tags.uniq.sort.join "\n"
+  exit
+end
+
+files = group_files(FILES)
+
 if options[:add_tags]
-  options[:add_tags].each{|tag| `exiv2  -M"set Xmp.dc.subject #{tag}" #{FILES.join " "}`}
+  options[:add_tags].each{|tag| `exiv2  -M"set Xmp.dc.subject #{tag}" #{files.join " "}`}
 end
 
 if options[:delete_tags]
-  FILES.each do |f|
+  files.each do |f|
     old_tags = `exiv2 -K Xmp.dc.subject #{f}`.gsub(',','').split /\s+/
     old_tags.shift 3
     `exiv2  -M"del Xmp.dc.subject" #{f}`
     (old_tags-options[:delete_tags]).each{|tag| `exiv2  -M"set Xmp.dc.subject #{tag}" #{f}`}
   end
+end
+
+if options[:rating]
+  `exiv2 -M"del Xmp.xmp.Rating" #{files.join " "}`
+  `exiv2 -M"set Xmp.xmp.Rating #{options[:rating]}" #{files.join " "}`
 end

@@ -1,0 +1,5 @@
+#!/bin/env fish
+pmount /dev/mmcblk0p1 /media/camera
+mv -iv /media/camera/**JPG ~/images/art/
+pumount /media/camera/
+exiv2 rename -F ~/images/art/IMG_*

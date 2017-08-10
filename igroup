@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+require "optparse"
+require 'yaml'
+
+options = {}
+optparse = OptionParser.new do|opts|
+  opts.on( '-h', '--help', 'Display this screen' ) do
+    puts opts
+    exit
+  end
+  opts.on( '-l', '--list', 'List groups' ) do |t|
+    options[:list] = true
+  end
+  opts.on( '-q', '--query-groups GROUPIDs', 'Query groups (comma separated)' ) do |t|
+    options[:query] = t.split ","
+  end
+end
+optparse.parse!
+
+require_relative "input.rb"
+
+if options[:list]
+  puts group_ids(FILES).join "\n"
+  exit
+end
+
+if options[:query]
+  puts group_files(options[:query]).join "\n"
+end

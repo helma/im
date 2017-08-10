@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "optparse"
 
+ARGV << '-h' if ARGV.empty?
 options = {}
 optparse = OptionParser.new do|opts|
   opts.on( '-h', '--help', 'Display this screen' ) do
@@ -17,14 +18,40 @@ optparse = OptionParser.new do|opts|
   opts.on( '-e', '--exclude-tags TAGS', 'Exclude tags (comma separated)' ) do |t|
     options[:exclude_tags] = t.split ","
   end
-  opts.on( '-T', '--require-tags TAGS', 'Require tags (comma separated)' ) do |t|
+  opts.on( '-a', '--all-tags TAGS', 'Require all tags (comma separated)' ) do |t|
     options[:require_tags] = t.split ","
+  end
+  opts.on( '-s', '--selected', 'Selected and single motivs' ) do |t|
+    options[:selected] = true
+  end
+  opts.on( '-S', '--single', 'Single motivs' ) do |t|
+    options[:single] = true
+  end
+  opts.on( '-u', '--unselected', 'Unselected motivs' ) do |t|
+    options[:unselected] = true
   end
 end
 optparse.parse!
 
 require_relative "input.rb"
 files = FILES
+
+if options[:selected]
+  grouped = `exiv2 -K Xmp.xmpMM.MotifID #{FILES.join " "} 2>/dev/null | cut -f1 -d ' '`.split "\n"
+  selected = `exiv2 -K Xmp.xmpMM.MotifSelected #{FILES.join " "} 2>/dev/null | cut -f1 -d ' '`.split "\n"
+  files = (FILES-grouped+selected).sort
+end
+
+if options[:single]
+  grouped = `exiv2 -K Xmp.xmpMM.MotifID #{FILES.join " "} 2>/dev/null | cut -f1 -d ' '`.split "\n"
+  files = FILES - grouped
+end
+
+if options[:unselected]
+  grouped = `exiv2 -K Xmp.xmpMM.MotifID #{FILES.join " "} 2>/dev/null | cut -f1 -d ' '`.split "\n"
+  selected = `exiv2 -K Xmp.xmpMM.MotifSelected #{FILES.join " "} 2>/dev/null | cut -f1 -d ' '`.split "\n"
+  files = (grouped-selected).sort
+end
 
 if options[:ratings]
   files = `exiv2 -K Xmp.xmp.Rating #{files.join " "} | grep '#{options[:ratings]}$' | sed 's/  Xmp\.xmp\.Rating.*$//' | sed 's/^.*=//'`.split("\n")
@@ -49,9 +76,10 @@ if options[:exclude_tags]
     file = i.shift
     i.shift(3)
     tags = i.join(" ").split(", ")
-    tagged_files << file if (tags & options[:exclude_tags]).empty?
+    files.delete(file)  unless (tags & options[:exclude_tags]).empty?
+    #tagged_files << file if (tags & options[:exclude_tags]).empty?
   end
-  files = tagged_files
+  #files = tagged_files
 end
 
 if options[:require_tags]
