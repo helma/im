@@ -1,12 +1,38 @@
 #!/usr/bin/env ruby
+require "optparse"
+
+dir = File.join(ENV["HOME"],"Dropbox/images")
+force_overwrite = false
+optparse = OptionParser.new do|opts|
+  opts.on( '-h', '--help', 'Display this screen' ) do
+    puts opts
+    exit
+  end
+  opts.on( '-d', '--directory DIR', 'Target directory' ) { |d| dir = d }
+  opts.on( '-f', '--force_overwrite', 'Force overwrite' ) { force_overwrite = true }
+end
+optparse.parse!
+
+
 require_relative "input.rb"
 
+fingerprints = {}
+`exiv2 -q -P v -g "Xmp.xmpMM.Fingerprint" #{FILES.join " "}`.split("\n").each do |l|
+  file,value_str = l.split(/\s+/)
+  if value_str.empty?
+    s = `convert #{file} -resize 16x16! -depth 16 -colorspace RGB -compress none PGM:-`.split("\n")[3..-1]
+    value_str = s.collect{|l| l.split(" ").collect{|v| v.to_f}}.flatten
+  end
+  fingerprints[file] = value_str
+end
+
 FILES.each do |file|
-  dropfile = File.join(ENV["HOME"],"Dropbox/images", File.basename(file))
-  unless File.exists? dropfile
+  dropfile = File.join(dir, File.basename(file))
+  if force_overwrite or !File.exists?(dropfile)
     puts "#{file} -> #{dropfile}"
     `convert "#{file}" -strip -resize 1024x "#{dropfile}"`
     `exiv2  -M"set Xmp.xmpRights.Marked True" \
+      -M"set Xmp.xmpMM.Fingerprint #{fingerprints[file]}" \
       -M"set Xmp.xmpRights.UsageTerms 'This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License (http://creativecommons.org/licenses/by-sa/4.0/).'" \
       -M"set Xmp.dc.creator void@alfadeo.de" \
       -M"set Xmp.dc.rights 'This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License (http://creativecommons.org/licenses/by-sa/4.0/).'" \
@@ -14,7 +40,7 @@ FILES.each do |file|
   end
 end
 
-Dir[File.join(ENV["HOME"],"Dropbox/images", "*")].each do |dropfile|
+Dir[File.join(dir, "*")].each do |dropfile|
   src = File.join(ENV["HOME"],"images", "art", File.basename(dropfile))
   puts `rm #{dropfile}` unless FILES.include? src
 end

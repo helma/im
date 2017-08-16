@@ -41,6 +41,19 @@ def cosine scaled_properties
   dot_product(scaled_properties[0], scaled_properties[1]) / (magnitude(scaled_properties[0]) * magnitude(scaled_properties[1]))
 end
 
+def dijkstra graph
+  path = [0]
+  vert = Array(1..graph.size-1)
+  graph.each_with_index{|v,i| v[i] = Float::INFINITY}
+  until vert.empty?
+    d = vert.collect{|v| graph[path.last][v]}
+    n = graph[path.last].index(d.min)
+    path << n
+    vert.delete n
+  end
+  path
+end 
+
 fingerprints = {}
 `exiv2 -q -P v -g "Xmp.xmpMM.Fingerprint" #{FILES.join " "}`.split("\n").each do |l|
   file,value_str = l.split(/\s+/)
@@ -76,8 +89,4 @@ selection.each_with_index do |f,i|
   end
 end
 
-File.open("/tmp/dist.csv","w+") do |f|
-  dist.each_with_index{|dist,i| f.puts dist.join(",")}
-end
-
-puts `Rscript tsp.R`.split(" ").collect{|v| selection[v.sub('V','').to_i-1]}.join("\n")
+puts dijkstra(dist).collect{|n| selection[n]}.join("\n")
