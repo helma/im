@@ -37,24 +37,28 @@ require_relative "input.rb"
 files = FILES
 
 if options[:selected]
-  grouped = `exiv2 -K Xmp.xmpMM.MotifID #{FILES.join " "} 2>/dev/null | cut -f1 -d ' '`.split "\n"
-  selected = `exiv2 -K Xmp.xmpMM.MotifSelected #{FILES.join " "} 2>/dev/null | cut -f1 -d ' '`.split "\n"
+  grouped = `exiv2 -K Xmp.xmpMM.MotifID #{files.join " "}`.split("\n").collect{|l| l.split(/\s+/)[0]}
+  selected = `exiv2 -K Xmp.xmpMM.MotifSelected #{files.join " "}`.split("\n").collect{|l| l.split(/\s+/)[0]}
   files = (FILES-grouped+selected).sort
 end
 
 if options[:single]
-  grouped = `exiv2 -K Xmp.xmpMM.MotifID #{FILES.join " "} 2>/dev/null | cut -f1 -d ' '`.split "\n"
+  grouped = `exiv2 -K Xmp.xmpMM.MotifID #{files.join " "}`.split("\n").collect{|l| l.split(/\s+/)[0]}
   files = FILES - grouped
 end
 
 if options[:unselected]
-  grouped = `exiv2 -K Xmp.xmpMM.MotifID #{FILES.join " "} 2>/dev/null | cut -f1 -d ' '`.split "\n"
-  selected = `exiv2 -K Xmp.xmpMM.MotifSelected #{FILES.join " "} 2>/dev/null | cut -f1 -d ' '`.split "\n"
+  grouped = `exiv2 -K Xmp.xmpMM.MotifID #{files.join " "}`.split("\n").collect{|l| l.split(/\s+/)[0]}
+  selected = `exiv2 -K Xmp.xmpMM.MotifSelected #{files.join " "}`.split("\n").collect{|l| l.split(/\s+/)[0]}
   files = (grouped-selected).sort
 end
 
 if options[:ratings]
-  files = `exiv2 -K Xmp.xmp.Rating #{files.join " "} | grep '#{options[:ratings]}$' | sed 's/  Xmp\.xmp\.Rating.*$//' | sed 's/^.*=//'`.split("\n")
+  ratings = `exiv2 -K Xmp.xmp.Rating #{files.join " "}`.split("\n").collect{|l| l.split(/\s+/)}
+  files = []
+  ratings.each do |rating|
+    files << rating.first if rating.last == options[:ratings]
+  end
 end
 
 if options[:include_tags]
@@ -94,4 +98,4 @@ if options[:require_tags]
   files = tagged_files
 end
 
-puts files.join "\n"
+puts files.collect{|f| f.strip}.join "\n"

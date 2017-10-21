@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 if STDIN.tty?
-  ARGV.empty? ? FILES = `ls -t /home/ch/images/art/*`.split("\n") : FILES = ARGV
+  ARGV.empty? ? FILES = Dir["/home/ch/images/art/*"] : FILES = ARGV
 else
   FILES = STDIN.readlines.collect{|l| l.chomp}
 end

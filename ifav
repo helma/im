@@ -2,6 +2,7 @@
 require_relative "input.rb"
 
 meta = `exiv2 -K Xmp.xmpMM.MotifSelected -K Xmp.xmpMM.MotifID -K Xmp.xmp.Rating #{FILES.join " "} 2>/dev/null`.split("\n").collect{|l| l.split(/\s+/)}
+#meta = File.readlines("tmp").collect{|l| l.split(/\s+/)}
 groups = meta.select{|m| m[1] == "Xmp.xmpMM.MotifID"}.collect{|m| m[4]}.uniq
 favs = meta.select{|m| m[1] == "Xmp.xmpMM.MotifSelected"}.collect{|m| m[0]}.uniq
 favgroups = favs.collect{|f| meta.select{|m| m[0] == f and m[1] == "Xmp.xmpMM.MotifID"}.collect{|m| m[4]}}.flatten.uniq

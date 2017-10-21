@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+require "json"
 require "optparse"
 
 dir = File.join(ENV["HOME"],"Dropbox/images")
@@ -13,8 +14,12 @@ optparse = OptionParser.new do|opts|
 end
 optparse.parse!
 
-
 require_relative "input.rb"
+
+def euclid fp
+  sq = fp[0].zip(fp[1]).map{|a,b| (a - b) ** 2}
+  Math.sqrt(sq.inject(0) {|s,c| s + c})
+end
 
 fingerprints = {}
 `exiv2 -q -P v -g "Xmp.xmpMM.Fingerprint" #{FILES.join " "}`.split("\n").each do |l|
@@ -23,7 +28,36 @@ fingerprints = {}
     s = `convert #{file} -resize 16x16! -depth 16 -colorspace RGB -compress none PGM:-`.split("\n")[3..-1]
     value_str = s.collect{|l| l.split(" ").collect{|v| v.to_f}}.flatten
   end
-  fingerprints[file] = value_str
+  fingerprints[File.basename(file)] = JSON.parse value_str
+end
+
+subjects = {}
+EXCLUDE = ["crop","gif"]
+`exiv2 -q -P v -g "Xmp.dc.subject" #{FILES.join " "}`.split("\n").each do |l|
+  file,value_str = l.split(/\s+/i,2)
+  value_str.split(", ").each do |subject|
+    unless EXCLUDE.include? subject
+      subjects[subject] ||= []
+      subjects[subject] << File.basename(file)
+    end
+  end
+end
+
+distances = {}
+fingerprints.each do |file1,fp1|
+  distances[file1] ||= {}
+  fingerprints.each do |file2,fp2|
+    if distances[file2] and distances[file2][file1] 
+      distances[file1][file2] = distances[file2][file1] 
+    else
+      distances[file1][file2] = euclid([fp1,fp2])
+    end
+  end
+end
+
+meta_file = File.join(dir, "meta.marshal")
+File.open(meta_file,"w+") do |f|
+  f.puts Marshal.dump(distances)
 end
 
 FILES.each do |file|
@@ -32,15 +66,16 @@ FILES.each do |file|
     puts "#{file} -> #{dropfile}"
     `convert "#{file}" -strip -resize 1024x "#{dropfile}"`
     `exiv2  -M"set Xmp.xmpRights.Marked True" \
-      -M"set Xmp.xmpMM.Fingerprint #{fingerprints[file]}" \
       -M"set Xmp.xmpRights.UsageTerms 'This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License (http://creativecommons.org/licenses/by-sa/4.0/).'" \
       -M"set Xmp.dc.creator void@alfadeo.de" \
       -M"set Xmp.dc.rights 'This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License (http://creativecommons.org/licenses/by-sa/4.0/).'" \
       -M"set Xmp.dc.description Original artwork available from void@alfadeo.de" #{dropfile}`
+      #-M"set Xmp.xmpMM.Fingerprint #{fingerprints[file]}" \
+      #-M"set Xmp.dc.description Original artwork available from info@alfadeo.de" #{dropfile}`
   end
 end
 
 Dir[File.join(dir, "*")].each do |dropfile|
   src = File.join(ENV["HOME"],"images", "art", File.basename(dropfile))
-  puts `rm #{dropfile}` unless FILES.include? src
+  puts `rm #{dropfile}` unless FILES.include? src or dropfile.match(/marshal/)
 end
